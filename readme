@@ -1,0 +1,28 @@
+https://dropgalaxy.com/                     error!!!
+
+// *****************
+manifest.json
+
+
+//********************
+browser.storage.local.get(cmDownloadVideId).then(obj => {
+  let key = cmDownloadVideId
+  if (Object.keys(obj).length === 0) {
+    let objNew = {};
+    objNew[key] = true;
+    browser.storage.local.set(objNew).then();
+  } else {
+    let val = obj[key];
+    let objNew = {};
+    objNew[key] = val;
+    let updateProperties = {visible: val};
+    browser.storage.local.set(objNew).then();
+    browser.contextMenus.update(key, updateProperties).then();
+  }
+});
+
+
+
+
+
+

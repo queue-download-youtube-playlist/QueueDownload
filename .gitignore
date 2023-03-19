@@ -1,0 +1,16 @@
+.idea
+node_modules
+
+code-compare
+code-json-from-object
+code-save
+code-snap
+error
+js_old
+json
+
+
+QueueDownload.zip
+yarn.lock
+
+

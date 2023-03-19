@@ -1,0 +1,78 @@
+{
+  "manifest_version": 2,
+  "name": "QueueDownload",
+  "description": "download playlist[all video], video, video thumbnail",
+  "version": "1.0.10",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-playlist-QueueDownload@example.com"
+    }
+  },
+  "icons": {
+    "48": "icons/48.png"
+  },
+  "options_ui": {
+    "page": "option/options.html",
+    "browser_style": true
+  },
+  "page_action": {
+    "default_icon": "icons/48.png",
+    "default_title": "add to queue",
+    "show_matches": [
+      "https://www.youtube.com/playlist?list=*"
+    ]
+  },
+  "browser_action": {
+    "default_icon": "icons/48.png",
+    "default_title": "QueueDownload"
+  },
+  "background": {
+    "scripts": [
+      "js/background.js"
+    ]
+  },
+  "permissions": [
+    "https://x2download.app/*",
+    "https://snapsave.io/*",
+    "https://img.youtube.com/*",
+    "https://www.youtube.com/playlist?list=*",
+    "tabs",
+    "contextMenus",
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "js/notice.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://x2download.app/*",
+        "https://snapsave.io/*"
+      ],
+      "js": [
+        "js/xdownload.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://img.youtube.com/*"
+      ],
+      "js": [
+        "js/img_youtube.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/playlist?list=*"
+      ],
+      "js": [
+        "js/yplaylist.js"
+      ]
+    }
+  ]
+}
