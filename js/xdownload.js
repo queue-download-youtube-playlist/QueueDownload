@@ -209,7 +209,7 @@ async function startFn(message) {
     // no vid, do nothing!
   }
 
-  let timeout = 100;
+  let timeout = 3600;
   setTimeout(async () => {
     let elementBtn = eleSearchForm.querySelector('.btn-red');
     elementBtn.click();
