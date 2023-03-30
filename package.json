@@ -5,9 +5,7 @@
   "main": "zipFile.js",
   "scripts": {
     "git_push": "git add . && git commit -m 'update' && git push --force",
-    "zip-file": "node zipFile.js",
-    "npm_install": "npm install",
-    "web_ext_run": "web-ext run"
+    "zip-file": "node zipFile.js"
   },
   "author": {
     "name": "vacantthinker"

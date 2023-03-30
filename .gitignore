@@ -4,6 +4,8 @@
 
 node_modules
 
+index.*
+
 code-compare
 code-json-from-object
 code-save
