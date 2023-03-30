@@ -165,7 +165,7 @@ async function sendMessageToNotice(message) {
   // browser.alarms.onAlarm.addListener(async (alarm) => {
   // });
 
-  let title = 'notice from youtube playlist download queue';
+  let title = 'youtube playlist download queue';
   await browser.notifications.create(notificationId, {
     type: 'basic',
     title: title,
@@ -176,7 +176,7 @@ async function sendMessageToNotice(message) {
     let {timeout} = message.close;
     setTimeout(async () => {
       await browser.notifications.clear(notificationId);
-    }, timeout * 100);
+    }, timeout * 1000);
   }
 
 }
