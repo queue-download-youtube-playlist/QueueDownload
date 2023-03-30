@@ -4,7 +4,9 @@
 
 node_modules
 
-index.*
+index.css
+index.html
+index.js
 
 code-compare
 code-json-from-object
