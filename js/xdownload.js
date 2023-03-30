@@ -23,15 +23,15 @@ async function fetchNoticeMP4(message) {
   await tabCloseSelf();
 }
 
-async function sendMessageToNotice(message) {
-  await browser.runtime.sendMessage({
-    action: `sendMessageToNotice`,
-    text: message.text,
-    close: {
-      timeout: 3,
-    },
-  });
-}
+// async function sendMessageToNotice(message) {
+//   await browser.runtime.sendMessage({
+//     action: `sendMessageToNotice`,
+//     text: message.text,
+//     close: {
+//       timeout: 3,
+//     },
+//   });
+// }
 
 /**
  *
@@ -89,10 +89,10 @@ async function watchElementSearchResult(message) {
           let elementBtnaction = eleTarget.querySelector('#btn-action');
           if (elementBtnaction) {
             elementBtnaction.click();
-            await sendMessageToNotice({
-              text:`searching... download link`
-            });
             elementBtnaction.remove();
+            // await sendMessageToNotice({
+            //   text: `searching... download link`,
+            // });
           }
 
           // get video author
@@ -162,7 +162,7 @@ async function watchElementSearchResult(message) {
             '#search-result > div[class=error]');
         if (element) {
           // todo check other's element !!!
-          let timeout = 10000;
+          let timeout = 20000;
           setTimeout(async () => {
             if (eleTarget.querySelector('#search-result > div[class=error]')) {
               let {queue} = message;
@@ -209,7 +209,7 @@ async function startFn(message) {
     // no vid, do nothing!
   }
 
-  let timeout = 3600;
+  let timeout = 100;
   setTimeout(async () => {
     let elementBtn = eleSearchForm.querySelector('.btn-red');
     elementBtn.click();
@@ -222,7 +222,7 @@ async function startFn(message) {
  * runtime onMessage
  */
 browser.runtime.onMessage.addListener(async (message) => {
-  if (message.type.includes('xdownload')) {
+  // if (message.type.includes('xdownload')) {
     await startFn(message);
-  }
-});
+  // }
+})

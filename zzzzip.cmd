@@ -1,1 +1,0 @@
-node zipFile.js && exit

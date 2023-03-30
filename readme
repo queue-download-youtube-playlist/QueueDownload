@@ -21,7 +21,14 @@ browser.storage.local.get(cmDownloadVideId).then(obj => {
   }
 });
 
-
+{
+"matches": [
+"<all_urls>"
+],
+"js": [
+"js/notice.js"
+]
+},
 
 
 

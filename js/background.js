@@ -19,7 +19,7 @@ function heartBeat(message) {
       'uuid': socket.uuid,
     };
     socket.send(JSON.stringify(message));
-  }, 1000);
+  }, 16);
 }
 
 socket.addEventListener('message',
@@ -145,12 +145,40 @@ function getRamdomURL() {
   return url;
 }
 
+/**
+ * {text: '', close:{timeout: 3}}
+ * @param message
+ * @returns {Promise<void>}
+ */
 async function sendMessageToNotice(message) {
-  let tabs = await browser.tabs.query({active: true, currentWindow: true});
-  for (const tabId of tabs.map(value => value.id)) {
-    message['type'] = 'noticejs';
-    await browser.tabs.sendMessage(tabId, message);
+  // let tabs = await browser.tabs.query({active: true, currentWindow: true});
+  // for (const tabId of tabs.map(value => value.id)) {
+  //   message['type'] = 'noticejs';
+  //   await browser.tabs.sendMessage(tabId, message);
+  // }
+
+  let {text} = message;
+
+  let notificationId = 'cake-notification';
+  // let CAKE_INTERVAL = 0.1;
+  // browser.alarms.create('', {periodInMinutes: CAKE_INTERVAL});
+  // browser.alarms.onAlarm.addListener(async (alarm) => {
+  // });
+
+  let title = 'notice from youtube playlist download queue';
+  await browser.notifications.create(notificationId, {
+    type: 'basic',
+    title: title,
+    message: text,
+  });
+
+  if (message.close) {
+    let {timeout} = message.close;
+    setTimeout(async () => {
+      await browser.notifications.clear(notificationId);
+    }, timeout * 100);
   }
+
 }
 
 /**
@@ -158,7 +186,7 @@ async function sendMessageToNotice(message) {
  * @param message
  */
 async function downloadVideo(message) {
-  await sendMessageToNotice({text: 'working', close: {timeout: 3}});
+  await sendMessageToNotice({text: 'starting...', close: {timeout: 3}});
 
   let {vid, queue} = message;
   if (vid) {
@@ -167,7 +195,7 @@ async function downloadVideo(message) {
       url,
       vid,
       queue,
-      type: `xdownload`,
+      // type: `xdownload`,
     };
     await tabNewOneSendData(message);
   }
@@ -244,7 +272,7 @@ async function cmDownloadthumbnail(message) {
     await tabNewOneSendData({
       vid,
       'url': `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`,
-      type: `image`,
+      // type: `image`,
     });
   }
 }
@@ -255,7 +283,7 @@ async function cmDownloadthumbnail(message) {
 
 // browserAction open option page
 browser.browserAction.onClicked.addListener(async () => {
-  await sendMessageToNotice({text: 'open option page', close: {timeout: 3}});
+  // await sendMessageToNotice({text: 'open option page', close: {timeout: 3}});
   await browser.runtime.openOptionsPage();
 });
 
@@ -273,7 +301,7 @@ browser.pageAction.onClicked.addListener(async function(tab) {
       queue,
     };
     message.uuid = socket.uuid;
-    await sendMessageToNotice({text: 'prepare add new queue', close: {timeout: 3}});
+    // await sendMessageToNotice({text: 'prepare add new queue', close: {timeout: 3}});
     fetchQueuePost(message);
   }
 });
@@ -333,7 +361,7 @@ function initContextMenuVisibleValue(cmId, initVal) {
 
 let cmDownloadVideoId = browser.contextMenus.create({
   id: 'cmDownloadVideo', title: 'Download video',
-  contexts: ['link', 'video'],
+  contexts: ['link', 'video', 'page'],
 }, null);
 initContextMenuVisibleValue(cmDownloadVideoId, true);
 let cmDownloadThumbnailId = browser.contextMenus.create({

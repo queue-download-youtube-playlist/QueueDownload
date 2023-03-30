@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "QueueDownload",
   "description": "download playlist[all video], video, video thumbnail",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "browser_specific_settings": {
     "gecko": {
       "id": "youtube-playlist-QueueDownload@example.com"
@@ -38,17 +38,11 @@
     "https://www.youtube.com/playlist?list=*",
     "tabs",
     "contextMenus",
-    "storage"
+    "storage",
+    "notifications",
+    "alarms"
   ],
   "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "js/notice.js"
-      ]
-    },
     {
       "matches": [
         "https://x2download.app/*",

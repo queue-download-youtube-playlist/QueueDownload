@@ -1,4 +1,7 @@
 .idea
+.yarn
+.pnp.cjs
+
 node_modules
 
 code-compare
@@ -8,6 +11,8 @@ code-snap
 error
 js_old
 json
+
+*.zip
 
 
 QueueDownload.zip

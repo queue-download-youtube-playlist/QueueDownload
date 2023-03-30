@@ -111,7 +111,7 @@ async function startFN(message) {
 }
 
 browser.runtime.onMessage.addListener(async (message) => {
-  if (message.type.includes('playlist')) {
-    await startFN(message);
-  }
-});
+  // if (message.type.includes('playlist')) {
+  await startFN(message);
+  // }
+})

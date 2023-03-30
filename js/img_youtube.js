@@ -32,13 +32,6 @@ async function fetchMovejpg(message) {
   setTimeout(async () => {
     message['action'] = 'fetchMovejpg';
     await browser.runtime.sendMessage(message);
-    await browser.runtime.sendMessage({
-      action:`sendMessageToNotice`,
-      text:`image download ok`,
-      close:{
-        timeout:3
-      }
-    })
     await tabCloseSelf()
   },3000)
 }
@@ -156,7 +149,6 @@ async function canvas_to_download(message) {
       let message = {
         'url': srcValue,
         vid,
-        type:`image`
       };
       await tabNewOneSendData(message);
     }
@@ -167,28 +159,26 @@ async function canvas_to_download(message) {
 //**********************************************************
 
 async function startFn(message) {
-  if (message.type.includes('image')) {
-    let {vid} = message;
-    if (vid) {
+  let {vid} = message;
+  if (vid) {
 
-      const imgMax = {name: 'maxresdefault.jpg', width: 1280, next: 'sd'};
-      const imgSd = {name: 'sddefault.jpg', width: 640, next: 'hq'};
-      const imgHq = {name: 'hqdefault.jpg', width: 480, next: 'mq'};
-      const imgMq = {name: 'mqdefault.jpg', width: 320};
-      /**
-       * image quality data
-       */
-      const allImg = {
-        'maxres': imgMax, 'sd': imgSd, 'hq': imgHq, 'mq': imgMq,
-      };
-      // this page only one element, just an img.
-      let img = document.querySelector('img');
-      let src = img['src'];
-      let message = {
-        src, allImg, img, vid,
-      };
-      await canvas_to_download(message);
-    }
+    const imgMax = {name: 'maxresdefault.jpg', width: 1280, next: 'sd'};
+    const imgSd = {name: 'sddefault.jpg', width: 640, next: 'hq'};
+    const imgHq = {name: 'hqdefault.jpg', width: 480, next: 'mq'};
+    const imgMq = {name: 'mqdefault.jpg', width: 320};
+    /**
+     * image quality data
+     */
+    const allImg = {
+      'maxres': imgMax, 'sd': imgSd, 'hq': imgHq, 'mq': imgMq,
+    };
+    // this page only one element, just an img.
+    let img = document.querySelector('img');
+    let src = img['src'];
+    let message = {
+      src, allImg, img, vid,
+    };
+    await canvas_to_download(message);
   }
 }
 
