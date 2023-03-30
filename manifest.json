@@ -1,11 +1,11 @@
 {
   "manifest_version": 2,
-  "name": "QueueDownload",
-  "description": "download playlist[all video], video, video thumbnail",
-  "version": "1.0.12",
+  "name": "youtube-playlist-download-queue",
+  "description": "youtube playlist download, youtube video,youtube thumbnail",
+  "version": "1.0.13",
   "browser_specific_settings": {
     "gecko": {
-      "id": "youtube-playlist-QueueDownload@example.com"
+      "id": "youtube-playlist-QueueDownload@example.com "
     }
   },
   "icons": {

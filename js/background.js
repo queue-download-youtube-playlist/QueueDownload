@@ -151,20 +151,8 @@ function getRamdomURL() {
  * @returns {Promise<void>}
  */
 async function sendMessageToNotice(message) {
-  // let tabs = await browser.tabs.query({active: true, currentWindow: true});
-  // for (const tabId of tabs.map(value => value.id)) {
-  //   message['type'] = 'noticejs';
-  //   await browser.tabs.sendMessage(tabId, message);
-  // }
-
   let {text} = message;
-
   let notificationId = 'cake-notification';
-  // let CAKE_INTERVAL = 0.1;
-  // browser.alarms.create('', {periodInMinutes: CAKE_INTERVAL});
-  // browser.alarms.onAlarm.addListener(async (alarm) => {
-  // });
-
   let title = 'youtube playlist download queue';
   await browser.notifications.create(notificationId, {
     type: 'basic',
@@ -172,12 +160,13 @@ async function sendMessageToNotice(message) {
     message: text,
   });
 
+  let timeout = 3;
   if (message.close) {
-    let {timeout} = message.close;
-    setTimeout(async () => {
-      await browser.notifications.clear(notificationId);
-    }, timeout * 1000);
+    timeout = message.close;
   }
+  setTimeout(async () => {
+    await browser.notifications.clear(notificationId);
+  }, timeout * 1000);
 
 }
 
