@@ -5,6 +5,7 @@
   "main": "zipFile.js",
   "scripts": {
     "git_push": "git add . && git commit -m 'update' && git push --force",
+    "git_push_force": "git push --force",
     "zip-file": "node zipFile.js"
   },
   "author": {
