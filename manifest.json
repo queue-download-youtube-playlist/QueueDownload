@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "youtube-playlist-download-queue",
   "description": "youtube playlist download, youtube video,youtube thumbnail",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "browser_specific_settings": {
     "gecko": {
       "id": "youtube-playlist-QueueDownload@example.com"

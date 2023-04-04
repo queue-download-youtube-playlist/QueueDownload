@@ -1,54 +1,45 @@
 'use strict';
 
 const prehost = `http://localhost:16206/`;
-const socket = new WebSocket('ws://localhost:16206');
-socket.addEventListener('open', () => {
-});
-socket.addEventListener('close', () => {
-  clearInterval();
-});
-socket.addEventListener('error', () => {
-  clearInterval();
-});
-
-function heartBeat(message) {
-  socket.uuid = message.uuid;
+let socketGlobal = new WebSocket('ws://localhost:16206');
+socketGlobal.addEventListener('open', async () => {
   setInterval(async () => {
     let message = {
       'action': 'heart_firefox',
-      'uuid': socket.uuid,
     };
-    socket.send(JSON.stringify(message));
+    socketGlobal?.send(JSON.stringify(message));
   }, 16);
-}
+});
+socketGlobal.addEventListener('close', () => {
+  clearInterval();
+});
+socketGlobal.addEventListener('error', () => {
+  clearInterval();
+});
+socketGlobal.addEventListener('message', async (messageEvent) => {
+  let message = JSON.parse(messageEvent.data);
 
-socket.addEventListener('message',
-    async (ev) => {
-      let message = JSON.parse(ev.data);
-      let action = message['action'];
-      switch (action) {
-        case'socketinit':
-          heartBeat(message);
-          break;
-        case'notice_browser_gogetmp4':
-          await downloadVideo(message);
-          break;
-        case'notice_browser_gogetjpg':
-          await tabNewOneSendData(message);
-          break;
-        case'notice_browser_gogetplaylist':
-          await tabNewOneSendData(message);
-          break;
-        case 'notice_browser_sendmessagetonotice':
-          await sendMessageToNotice(message);
-          break;
-      }
-    });
+  let action = message['action'];
+  switch (action) {
+    case'notice_browser_gogetmp4':
+      await downloadVideo(message);
+      break;
+    case'notice_browser_gogetjpg':
+      await tabNewOneSendData(message);
+      break;
+    case'notice_browser_gogetplaylist':
+      await tabNewOneSendData(message);
+      break;
+    case 'nb_notice':
+      await sendMessageToNotice(message);
+      break;
+  }
+});
 
 function fetchMovejpg(message) {
-  let {vid, queue, uuid} = message;
+  let {vid} = message;
   if (vid) {
-    let message = {vid, queue, uuid};
+    let message = {vid};
     let input = `${prehost}move/jpg`;
     let init = {
       method: 'POST', headers: {
@@ -60,7 +51,6 @@ function fetchMovejpg(message) {
 }
 
 function fetchQueuePost(message) {
-  message.uuid = socket.uuid;
   let input = `${prehost}queue/`;
   let init = {
     method: 'post', headers: {
@@ -132,6 +122,18 @@ function fetchNoticeMP4(message) {
   fetch(input, init).then();
 }
 
+/**
+ *
+ * @param message
+ * @returns {Promise<Boolean>}
+ */
+async function fetchVideoCheck(message) {
+  let {vid} = message;
+  let input = `${prehost}video/check/${vid}`;
+  let response = await fetch(input);
+  return response.json();
+}
+
 //******************************************************************************
 //******************************************************************************
 
@@ -146,14 +148,21 @@ function getRamdomURL() {
 }
 
 /**
- * {text: '', close:{timeout: 3}}
- * @param message
+ *
+ * @param message{Object:{title:String, text:String}}
  * @returns {Promise<void>}
  */
 async function sendMessageToNotice(message) {
-  let {text} = message;
+  let {title, text} = message;
+  let titleDefault = 'youtube playlist download queue';
+  if (message.hasOwnProperty('title') === false) {
+    title = titleDefault;
+  } else if (title) {
+  } else {
+    title = titleDefault;
+  }
+
   let notificationId = 'cake-notification';
-  let title = 'youtube playlist download queue';
   await browser.notifications.create(notificationId, {
     type: 'basic',
     title: title,
@@ -161,9 +170,7 @@ async function sendMessageToNotice(message) {
   });
 
   let timeout = 3;
-  if (message.close) {
-    timeout = message.close;
-  }
+
   setTimeout(async () => {
     await browser.notifications.clear(notificationId);
   }, timeout * 1000);
@@ -175,7 +182,8 @@ async function sendMessageToNotice(message) {
  * @param message
  */
 async function downloadVideo(message) {
-  await sendMessageToNotice({text: 'starting...', close: {timeout: 3}});
+  // let messageNotice = {title: 'open new tab', text: 'go to searching'};
+  // await sendMessageToNotice(messageNotice);
 
   let {vid, queue} = message;
   if (vid) {
@@ -246,12 +254,33 @@ function getVid(videourl) {
   let prefixShort = 'https://youtu.be/';
   let endSplit = '&';
   // let {, start, end} = obj;
-  if (videourl.includes(prefixWatch)) {
+  if (videourl === null) {
+    return null;
+  } else if (videourl.includes(prefixWatch)) {
     return getVidBySearch(videourl, prefixWatch, endSplit);
   } else if (videourl.includes(prefixShort)) {
     return getVidBySearch(videourl, prefixShort, endSplit);
   } else {
     return null;
+  }
+}
+
+async function cmDownloadVideoCheck(message) {
+  let {vid} = message;
+  let exists = await fetchVideoCheck(message);
+  if (exists) {
+    let messageExists = {
+      title: 'dont need download',
+      text: 'video data exists\nmp4 file also exists',
+    };
+    await sendMessageToNotice(messageExists);
+  } else {
+    let messageExistsNot = {
+      title: 'searching',
+      text: `video ${vid}`,
+    };
+    await sendMessageToNotice(messageExistsNot);
+    await downloadVideo(message);
   }
 }
 
@@ -278,25 +307,21 @@ browser.browserAction.onClicked.addListener(async () => {
 
 // add this playlist to queue
 browser.pageAction.onClicked.addListener(async function(tab) {
-  if (socket.uuid) {
-    let {url, title} = tab;
-    let prefixPlaylist = 'https://www.youtube.com/playlist?list=';
-    let searchObj = {
-      'start': prefixPlaylist, 'type': 2,
-    };
-    let queue = convertTargetlinkToQueue(url, searchObj);
-    queue['title'] = title;
-    let message = {
-      queue,
-    };
-    message.uuid = socket.uuid;
-    // await sendMessageToNotice({text: 'prepare add new queue', close: {timeout: 3}});
-    fetchQueuePost(message);
-  }
+  let {url, title} = tab;
+  let prefixPlaylist = 'https://www.youtube.com/playlist?list=';
+  let searchObj = {
+    'start': prefixPlaylist, 'type': 2,
+  };
+  let queue = convertTargetlinkToQueue(url, searchObj);
+  queue['title'] = title;
+  let message = {
+    queue,
+  };
+  // await sendMessageToNotice({text: 'prepare add new queue', close: {timeout: 3}});
+  fetchQueuePost(message);
 });
 
 browser.runtime.onMessage.addListener(async (message) => {
-  message.uuid = socket.uuid;
 
   switch (message.action) {
     case 'sendMessageToNotice':
@@ -349,36 +374,45 @@ function initContextMenuVisibleValue(cmId, initVal) {
 }
 
 let cmDownloadVideoId = browser.contextMenus.create({
-  id: 'cmDownloadVideo', title: 'Download video',
-  contexts: ['link', 'video', 'page'],
-}, null);
-initContextMenuVisibleValue(cmDownloadVideoId, true);
-let cmDownloadThumbnailId = browser.contextMenus.create({
-  id: 'cmDownloadthumbnail', title: 'Download Thumbnail',
-  contexts: ['image', 'link'],
-}, null);
-initContextMenuVisibleValue(cmDownloadThumbnailId, false);
-browser.contextMenus.onClicked.addListener(
-    async (info, tab) => {
-      if (socket.uuid) {
-
-        let videourl = info.linkUrl || info.pageUrl;
-        // is it a youtube link?
-        let vid = getVid(videourl);
-        if (vid) {
-          let message = {
-            vid,
-          };
-          switch (info.menuItemId) {
-            case cmDownloadVideoId:
-              await downloadVideo(message);
-              break;
-            case cmDownloadThumbnailId:
-              await cmDownloadthumbnail(message);
-              break;
-          }
-        } else {
-          // not a youtube link, do nothing
-        }
-      }
+      id: 'cmDownloadVideo', title: 'Download video',
+      contexts: ['link', 'video', 'page', 'selection'],
+    },
+    () => {
+      initContextMenuVisibleValue(cmDownloadVideoId, true);
     });
+let cmDownloadThumbnailId = browser.contextMenus.create({
+      id: 'cmDownloadthumbnail', title: 'Download Thumbnail',
+      contexts: ['image', 'link'],
+    },
+    () => {
+      initContextMenuVisibleValue(cmDownloadThumbnailId, false);
+    });
+
+//************************************************************************
+browser.contextMenus.onClicked.addListener(async (info) => {
+  // is it a youtube link?
+  let vid = getVid(info.linkUrl || null)
+      || getVid(info.pageUrl || null)
+      || getVid(info.selectionText || null);
+
+  if (vid) {
+    let message = {
+      vid,
+    };
+    switch (info.menuItemId) {
+      case cmDownloadVideoId:
+        await cmDownloadVideoCheck(message);
+        break;
+      case cmDownloadThumbnailId:
+        await cmDownloadthumbnail(message);
+        break;
+    }
+  } else {
+    // not a youtube link, do nothing
+    let messageExists = {
+      title: 'cannot download',
+      text: 'cannot find video id',
+    };
+    await sendMessageToNotice(messageExists);
+  }
+});
