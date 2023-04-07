@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "youtube-playlist-download-queue",
-  "description": "youtube playlist download, youtube video,youtube thumbnail",
+  "name": "youtube-playlist-download-require-windows-app",
+  "description": "youtube playlist download, youtube video download,youtube thumbnail download",
   "homepage_url": "https://github.com/queue-download-youtube-playlist/queue-download-desktop#what-is-this",
-  "version": "1.0.14.3",
+  "version": "1.0.14.4",
   "browser_specific_settings": {
     "gecko": {
       "id": "youtube-playlist-QueueDownload@example.com"

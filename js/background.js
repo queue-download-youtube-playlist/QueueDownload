@@ -38,13 +38,22 @@ socketGlobal.addEventListener('message',
         await tabNewOneSendData(message);
         break;
       case'notice_browser_gogetplaylist':
-        await tabNewOneSendData(message);
+        await handleGoGetPlaylist(message)
         break;
       case 'notice_firefox_notice':
         await sendMessageToNotice(message);
         break;
     }
   });
+
+async function handleGoGetPlaylist(message) {
+  await sendMessageToNotice({
+    title: 'seaching playlist',
+    text: 'collect all video id\nby scrolling...'
+  })
+
+  await tabNewOneSendData(message);
+}
 
 function fetchMovejpg(message) {
   let {vid} = message;
@@ -98,7 +107,12 @@ function fetchVideoPost(message) {
   fetch(input, init).then();
 }
 
-function fetchTaskplaylist(message) {
+async function handleTaskplaylist(message) {
+  await sendMessageToNotice({
+    title: 'collect ok!',
+    text: 'playlist all video id collected...'
+  })
+
   let input = `${prehost}task/`;
   let init = {
     method: 'POST', mode: 'cors', headers: {
@@ -340,8 +354,8 @@ browser.runtime.onMessage.addListener(async (message) => {
     case'fetchVideoPut':
       fetchVideoPut(message);
       break;
-    case'fetchTaskplaylist':
-      fetchTaskplaylist(message);
+    case'handleTaskplaylist':
+      await handleTaskplaylist(message);
       break;
     case'fetchMovejpg':
       fetchMovejpg(message);

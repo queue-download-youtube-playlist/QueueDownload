@@ -7,8 +7,8 @@ async function tabCloseSelf() {
   }, 1000);
 }
 
-async function fetchTaskplaylist(message) {
-  message['action'] = 'fetchTaskplaylist';
+async function handleTaskplaylist(message) {
+  message['action'] = 'handleTaskplaylist';
   await browser.runtime.sendMessage(message);
   await tabCloseSelf();
 }
@@ -71,7 +71,7 @@ async function collectAllVid(elementPage, playlist) {
       vsum,
     };
     clearInterval(intervalIdCollect);
-    await fetchTaskplaylist(message);
+    await handleTaskplaylist(message);
   }, timeoutTotal);
 
 }
