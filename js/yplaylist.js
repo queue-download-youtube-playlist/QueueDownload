@@ -13,22 +13,12 @@ async function fetchTaskplaylist(message) {
   await tabCloseSelf();
 }
 
-async function sendMessageToNotice(message) {
-  await browser.runtime.sendMessage({
-    action: `sendMessageToNotice`,
-    text: message.text,
-    close: {
-      timeout: 3,
-    },
-  });
-}
-
 /**
  * collect all vid by playlist
  * @param elementPage
- * @param queue
+ * @param playlist
  */
-async function collectAllVid(elementPage, queue) {
+async function collectAllVid(elementPage, playlist) {
   let regExpVid = /(?<=watch\?v=)(.+)(?=\&list)/;
   let regExpVindex = /(?<=\&index=)(\d{1,10})/;
   const hrefAttr = 'href';
@@ -47,7 +37,6 @@ async function collectAllVid(elementPage, queue) {
   let intervalId = setInterval(async () => {
     let x = 0;
     let y = elementPage.clientHeight;
-    await sendMessageToNotice({text: `scrolling ... `});
     window.scrollTo(x, y);
 
     count = count - 1;
@@ -77,12 +66,11 @@ async function collectAllVid(elementPage, queue) {
     }
 
     let message = {
-      queue,
+      playlist,
       datamap,
       vsum,
     };
     clearInterval(intervalIdCollect);
-    await sendMessageToNotice({text: `collect finish ... `});
     await fetchTaskplaylist(message);
   }, timeoutTotal);
 
@@ -91,7 +79,7 @@ async function collectAllVid(elementPage, queue) {
 //-----------------------------------------------------------------------------------
 
 async function startFN(message) {
-  let {queue} = message;
+  let {playlist} = message;
   let elementPage = document.querySelector(
       'ytd-page-manager#page-manager');
 
@@ -103,7 +91,7 @@ async function startFN(message) {
             'ytd-two-column-browse-results-renderer');
         if (eleTwo) {
           observer.disconnect();
-          await collectAllVid(elementPage, queue);
+          await collectAllVid(elementPage, playlist);
         }
       });
   obPage.observe(elementPage, {childList: true});
@@ -111,7 +99,5 @@ async function startFN(message) {
 }
 
 browser.runtime.onMessage.addListener(async (message) => {
-  // if (message.type.includes('playlist')) {
   await startFN(message);
-  // }
 })

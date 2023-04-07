@@ -1,8 +1,11 @@
 'use strict';
 
+// `http://localhost:16206/`
 const prehost = `http://localhost:16206/`;
 let socketGlobal = new WebSocket('ws://localhost:16206');
 socketGlobal.addEventListener('open', async () => {
+  await sendMessageToNotice({title: 'connect success', text: ''});
+
   setInterval(async () => {
     let message = {
       'action': 'heart_firefox',
@@ -10,31 +13,38 @@ socketGlobal.addEventListener('open', async () => {
     socketGlobal?.send(JSON.stringify(message));
   }, 16);
 });
-socketGlobal.addEventListener('close', () => {
+
+function cleanSocket() {
   clearInterval();
+  socketGlobal = null;
+}
+
+socketGlobal.addEventListener('close', () => {
+  cleanSocket();
 });
 socketGlobal.addEventListener('error', () => {
-  clearInterval();
+  cleanSocket();
 });
-socketGlobal.addEventListener('message', async (messageEvent) => {
-  let message = JSON.parse(messageEvent.data);
+socketGlobal.addEventListener('message',
+  async (messageEvent) => {
+    let message = JSON.parse(messageEvent.data);
 
-  let action = message['action'];
-  switch (action) {
-    case'notice_browser_gogetmp4':
-      await downloadVideo(message);
-      break;
-    case'notice_browser_gogetjpg':
-      await tabNewOneSendData(message);
-      break;
-    case'notice_browser_gogetplaylist':
-      await tabNewOneSendData(message);
-      break;
-    case 'nb_notice':
-      await sendMessageToNotice(message);
-      break;
-  }
-});
+    let action = message['action'];
+    switch (action) {
+      case'notice_browser_gogetmp4':
+        await downloadVideo(message);
+        break;
+      case'notice_browser_gogetjpg':
+        await tabNewOneSendData(message);
+        break;
+      case'notice_browser_gogetplaylist':
+        await tabNewOneSendData(message);
+        break;
+      case 'notice_firefox_notice':
+        await sendMessageToNotice(message);
+        break;
+    }
+  });
 
 function fetchMovejpg(message) {
   let {vid} = message;
@@ -65,19 +75,13 @@ function fetchQueuePost(message) {
  * @param message
  */
 function fetchVideoPut(message) {
-  let {vid, video, queue} = message;
-  if (vid) {
-    let message = {
-      vid, video, queue,
-    };
-    let input = `${prehost}video/`;
-    let init = {
-      method: 'PUT', mode: 'cors', headers: {
-        'Content-Type': 'application/json',
-      }, body: JSON.stringify(message),
-    };
-    fetch(input, init).then();
-  }
+  let input = `${prehost}video/`;
+  let init = {
+    method: 'PUT', mode: 'cors', headers: {
+      'Content-Type': 'application/json',
+    }, body: JSON.stringify(message),
+  };
+  fetch(input, init).then();
 }
 
 /**
@@ -85,19 +89,13 @@ function fetchVideoPut(message) {
  * @param message
  */
 function fetchVideoPost(message) {
-  let {vid, video, queue} = message;
-  if (vid) {
-    let message = {
-      vid, video, queue,
-    };
-    let input = `${prehost}video/`;
-    let init = {
-      method: 'POST', mode: 'cors', headers: {
-        'Content-Type': 'application/json',
-      }, body: JSON.stringify(message),
-    };
-    fetch(input, init).then();
-  }
+  let input = `${prehost}video/`;
+  let init = {
+    method: 'POST', mode: 'cors', headers: {
+      'Content-Type': 'application/json',
+    }, body: JSON.stringify(message),
+  };
+  fetch(input, init).then();
 }
 
 function fetchTaskplaylist(message) {
@@ -182,26 +180,35 @@ async function sendMessageToNotice(message) {
  * @param message
  */
 async function downloadVideo(message) {
-  // let messageNotice = {title: 'open new tab', text: 'go to searching'};
-  // await sendMessageToNotice(messageNotice);
-
-  let {vid, queue} = message;
+  let {vid, playlist} = message;
   if (vid) {
     let url = getRamdomURL();
     let message = {
       url,
       vid,
-      queue,
+      playlist,
       // type: `xdownload`,
     };
     await tabNewOneSendData(message);
+
+    await sendMessageToNotice({title: 'searching', text: `video ${vid}`});
   }
 }
 
 //******************************************************
 
+async function tabNewOneDownloadPage() {
+  await sendMessageToNotice({
+    title: 'cannot connect windows portable app',
+    text: 'please keep windows app running or\ndownload windows app',
+  });
+  let orgs = `https://github.com/queue-download-youtube-playlist/`;
+  let url = `${orgs}queue-download-desktop#what-is-this`;
+  await browser.tabs.create({url});
+}
+
 /**
- * send tab with data, same time download jpg
+ * send tab with data,
  * @param message{Object:{url:String,any:any}}
  */
 async function tabNewOneSendData(message) {
@@ -242,8 +249,8 @@ function getVidBySearch(videourl, start, end) {
     let endIdx = videourl.indexOf(end);
 
     return endIdx === -1 ?
-        videourl.substring(startIdx + start.length) :
-        videourl.substring(startIdx + start.length, endIdx);
+      videourl.substring(startIdx + start.length) :
+      videourl.substring(startIdx + start.length, endIdx);
   } catch (e) {
     return null;
   }
@@ -266,7 +273,6 @@ function getVid(videourl) {
 }
 
 async function cmDownloadVideoCheck(message) {
-  let {vid} = message;
   let exists = await fetchVideoCheck(message);
   if (exists) {
     let messageExists = {
@@ -275,11 +281,6 @@ async function cmDownloadVideoCheck(message) {
     };
     await sendMessageToNotice(messageExists);
   } else {
-    let messageExistsNot = {
-      title: 'searching',
-      text: `video ${vid}`,
-    };
-    await sendMessageToNotice(messageExistsNot);
     await downloadVideo(message);
   }
 }
@@ -307,18 +308,21 @@ browser.browserAction.onClicked.addListener(async () => {
 
 // add this playlist to queue
 browser.pageAction.onClicked.addListener(async function(tab) {
-  let {url, title} = tab;
-  let prefixPlaylist = 'https://www.youtube.com/playlist?list=';
-  let searchObj = {
-    'start': prefixPlaylist, 'type': 2,
-  };
-  let queue = convertTargetlinkToQueue(url, searchObj);
-  queue['title'] = title;
-  let message = {
-    queue,
-  };
-  // await sendMessageToNotice({text: 'prepare add new queue', close: {timeout: 3}});
-  fetchQueuePost(message);
+  if (socketGlobal) {
+    let {url, title} = tab;
+    let prefixPlaylist = 'https://www.youtube.com/playlist?list=';
+    let searchObj = {
+      'start': prefixPlaylist, 'type': 2,
+    };
+    let queue = convertTargetlinkToQueue(url, searchObj);
+    queue['title'] = title;
+    let message = {
+      queue,
+    };
+    fetchQueuePost(message);
+  } else {
+    await tabNewOneDownloadPage();
+  }
 });
 
 browser.runtime.onMessage.addListener(async (message) => {
@@ -353,66 +357,69 @@ browser.runtime.onMessage.addListener(async (message) => {
 
 function initContextMenuVisibleValue(cmId, initVal) {
   browser.storage.local.get(cmId.toString()).then(
-      async (obj) => {
-        let length = Object.keys(obj).length;
-        if (length === 0) {
-          let objNew = {};
-          objNew[cmId] = initVal;
-          await browser.storage.local.set(objNew);
-          await browser.contextMenus.update(cmId,
-              {visible: initVal});
-        } else if (length === 1) {
-          let val = obj[cmId];
-          let objNew = {};
-          objNew[cmId] = val;
-          await browser.storage.local.set(objNew);
-          await browser.contextMenus.update(cmId,
-              {visible: val});
+    async (obj) => {
+      let length = Object.keys(obj).length;
+      if (length === 0) {
+        let objNew = {};
+        objNew[cmId] = initVal;
+        await browser.storage.local.set(objNew);
+        await browser.contextMenus.update(cmId,
+          {visible: initVal});
+      } else if (length === 1) {
+        let val = obj[cmId];
+        let objNew = {};
+        objNew[cmId] = val;
+        await browser.storage.local.set(objNew);
+        await browser.contextMenus.update(cmId,
+          {visible: val});
 
-        }
-      });
+      }
+    });
 }
 
 let cmDownloadVideoId = browser.contextMenus.create({
-      id: 'cmDownloadVideo', title: 'Download video',
-      contexts: ['link', 'video', 'page', 'selection'],
-    },
-    () => {
-      initContextMenuVisibleValue(cmDownloadVideoId, true);
-    });
+    id: 'cmDownloadVideo', title: 'Download video',
+    contexts: ['link', 'video', 'page', 'selection'],
+  },
+  () => {
+    initContextMenuVisibleValue(cmDownloadVideoId, true);
+  });
 let cmDownloadThumbnailId = browser.contextMenus.create({
-      id: 'cmDownloadthumbnail', title: 'Download Thumbnail',
-      contexts: ['image', 'link'],
-    },
-    () => {
-      initContextMenuVisibleValue(cmDownloadThumbnailId, false);
-    });
+    id: 'cmDownloadthumbnail', title: 'Download Thumbnail',
+    contexts: ['image', 'link'],
+  },
+  () => {
+    initContextMenuVisibleValue(cmDownloadThumbnailId, false);
+  });
 
 //************************************************************************
 browser.contextMenus.onClicked.addListener(async (info) => {
-  // is it a youtube link?
-  let vid = getVid(info.linkUrl || null)
+  if (socketGlobal) {
+    // is it a youtube link?
+    let vid = getVid(info.linkUrl || null)
       || getVid(info.pageUrl || null)
       || getVid(info.selectionText || null);
 
-  if (vid) {
-    let message = {
-      vid,
-    };
-    switch (info.menuItemId) {
-      case cmDownloadVideoId:
-        await cmDownloadVideoCheck(message);
-        break;
-      case cmDownloadThumbnailId:
-        await cmDownloadthumbnail(message);
-        break;
+    if (vid) {
+      let message = {vid, playlist: null};
+      switch (info.menuItemId) {
+        case cmDownloadVideoId:
+          await cmDownloadVideoCheck(message);
+          break;
+        case cmDownloadThumbnailId:
+          await cmDownloadthumbnail(message);
+          break;
+      }
+    } else {
+      // not a youtube link, do nothing
+      let messageExists = {
+        title: 'cannot download',
+        text: 'cannot find video id',
+      };
+      await sendMessageToNotice(messageExists);
     }
   } else {
-    // not a youtube link, do nothing
-    let messageExists = {
-      title: 'cannot download',
-      text: 'cannot find video id',
-    };
-    await sendMessageToNotice(messageExists);
+    await tabNewOneDownloadPage();
   }
+
 });
