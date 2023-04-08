@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "youtube-playlist-download-require-windows-app",
-  "description": "youtube playlist download, youtube video download,youtube thumbnail download",
+  "description": "youtube playlist download require windows app, youtube video download,youtube thumbnail download",
   "homepage_url": "https://github.com/queue-download-youtube-playlist/queue-download-desktop#what-is-this",
   "version": "1.0.14.4",
   "browser_specific_settings": {
@@ -41,7 +41,6 @@
     "contextMenus",
     "storage",
     "notifications",
-    "alarms"
   ],
   "content_scripts": [
     {
